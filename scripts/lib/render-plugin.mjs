@@ -25,16 +25,16 @@ function parseRepositorySlug(repositoryUrl) {
 }
 
 export function resolveRepositorySlug(pkg) {
-  if (process.env.GITHUB_REPOSITORY) {
-    return process.env.GITHUB_REPOSITORY;
-  }
-
   if (typeof pkg.repository === "string") {
     return parseRepositorySlug(pkg.repository) ?? "<owner>/<repo>";
   }
 
   if (pkg.repository && typeof pkg.repository.url === "string") {
     return parseRepositorySlug(pkg.repository.url) ?? "<owner>/<repo>";
+  }
+
+  if (process.env.GITHUB_REPOSITORY) {
+    return process.env.GITHUB_REPOSITORY;
   }
 
   return "<owner>/<repo>";
