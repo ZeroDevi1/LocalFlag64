@@ -1,78 +1,93 @@
 # LocalFlag64
 
-LocalFlag64 是一个面向 Loon 的本地订阅改写插件：它通过固定的本地入口 `https://localflag64.loon/sub?url=...` 拉取原始 Base64 订阅，在本地解码节点名称、按地区关键词补充 emoji 国旗，再重新编码后返回给 Loon。
+LocalFlag64 现已重构为 Cloudflare Worker 版 Base64 订阅加旗服务。它接收一个真实可访问的上游订阅链接，拉取 Base64 节点内容，在边缘侧按地区关键词补充 emoji 国旗后返回结果，供 Loon 直接作为订阅地址使用。
 
-仓库地址：`https://github.com/ZeroDevi1/LocalFlag64`
+- 仓库地址：`https://github.com/ZeroDevi1/LocalFlag64`
+- 当前版本：`v1.1.0`
+- 推荐部署：Cloudflare Workers
 
-## 功能特性
+## 先说结论
 
-- 纯本地改写，不依赖第三方订阅转换服务
-- 首版支持 `ss`、`ssr`、`trojan`、`vmess`、`vless`、`hysteria`、`hysteria2`、`hy2`、`tuic`
-- 已带 emoji 前缀的节点不重复添加
-- 对未知协议、私有扩展和无法解析的行保持原样
-- 支持 GitHub Actions 自动测试、构建和发布插件产物
+- 一般情况下，Cloudflare Worker 在中国大陆可以访问，但稳定性和速度取决于运营商、地区以及你使用的是 `workers.dev` 还是自定义域名
+- 如果追求更稳，建议绑定你自己的自定义域名
+- 如果追求“面向中国大陆长期稳定可控”，还需要考虑 Cloudflare 中国网络、备案和企业能力，这已经超出普通免费 Worker 范围
+
+关于这点，我依据 Cloudflare 官方文档做了判断：Cloudflare Workers 默认运行在其全球网络；而 Cloudflare 中国网络是单独能力，面向需要中国大陆本地化接入的场景。也就是说，普通 Worker 通常能访问，但不等于“官方承诺在大陆始终最佳”。  
+参考：
+
+- [Cloudflare Workers 概览](https://developers.cloudflare.com/workers/)
+- [Cloudflare 中国网络概览](https://developers.cloudflare.com/china-network/)
+
+## 功能概览
+
+- 支持 `ss`、`ssr`、`trojan`、`vmess`、`vless`、`hysteria`、`hysteria2`、`hy2`、`tuic`
+- 已带 emoji 前缀的节点不会重复添加
+- 未识别协议、私有扩展、解析失败的节点保持原样
+- 支持香港、台湾、日本、韩国、新加坡、美国、俄罗斯、菲律宾、迪拜 / 阿联酋等重点地区
+- 真实订阅地址不需要写进 GitHub 仓库，只在你自己的 Loon 订阅配置里使用
 
 ## 工作原理
 
-1. Loon 安装 `LocalFlag64.plugin`
-2. 用户把原始订阅包装为 `https://localflag64.loon/sub?url=<URL 编码后的原订阅链接>`
-3. 插件脚本拦截这个本地入口请求
-4. 插件脚本向上游订阅地址发起请求
-5. 若响应体是 Base64 节点订阅，则本地解码并重命名节点
-6. 脚本将改写后的 Base64 文本返回给 Loon
+1. 你部署一个自己的 Cloudflare Worker
+2. Loon 访问 Worker 地址：`https://<your-worker>.workers.dev/sub?url=<编码后的原始订阅>`
+3. Worker 拉取上游原始订阅
+4. Worker 判断响应体是否为 Base64 节点订阅
+5. Worker 解析节点名并按关键词补充 emoji 国旗
+6. Worker 返回处理后的 Base64 内容给 Loon
 
-## 使用方式
+## 快速开始
 
-### 1. 安装插件
+### 1. 安装依赖
 
-发布后，Loon 插件地址为：
+```bash
+npm install
+```
 
-`https://cdn.jsdelivr.net/gh/ZeroDevi1/LocalFlag64@release/LocalFlag64.plugin`
+### 2. 登录 Cloudflare
 
-GitHub Release 备用地址：
+```bash
+npx wrangler login
+```
 
-`https://github.com/ZeroDevi1/LocalFlag64/releases/latest/download/LocalFlag64.plugin`
+### 3. 本地调试
 
-插件内部引用的脚本地址为：
+```bash
+npm run dev
+```
 
-`https://cdn.jsdelivr.net/gh/ZeroDevi1/LocalFlag64@release/localflag64.min.js`
+默认会启动本地 Worker 调试服务。
 
-### 2. 包装原订阅链接
+### 4. 部署到 Cloudflare Worker
 
-假设原始订阅链接如下：
+```bash
+npm run deploy
+```
+
+部署成功后，你会拿到一个类似下面的地址：
+
+```text
+https://localflag64.<your-subdomain>.workers.dev
+```
+
+### 5. 在 Loon 中使用
+
+假设你的原始订阅地址是：
 
 ```text
 https://example.com/subscription/base64
 ```
 
-包装后给 Loon 使用的订阅链接如下：
+则在 Loon 中填写的订阅地址应为：
 
 ```text
-https://localflag64.loon/sub?url=https%3A%2F%2Fexample.com%2Fsubscription%2Fbase64
+https://localflag64.<your-subdomain>.workers.dev/sub?url=https%3A%2F%2Fexample.com%2Fsubscription%2Fbase64
 ```
 
-你也可以用任意 URL 编码工具对原订阅地址进行编码后再拼接。
+## 使用说明
 
-## 本地开发
+更详细的安装、部署、Loon 配置和排错说明见：
 
-### 环境要求
-
-- Node.js 20 及以上
-- npm 10 及以上
-
-### 常用命令
-
-```bash
-npm install
-npm run typecheck
-npm test
-npm run build
-```
-
-构建完成后会生成：
-
-- `dist/localflag64.min.js`
-- `dist/LocalFlag64.plugin`
+- `USAGE.md`
 
 ## 项目结构
 
@@ -83,41 +98,42 @@ src/
     flags.ts
     protocols.ts
     subscription.ts
-  loon/
-    handler.ts
-    main.ts
-    runtime.ts
-scripts/
-  build.mjs
-  lib/render-plugin.mjs
-templates/
-  LocalFlag64.plugin.tpl
+  service/
+    proxy.ts
+  worker/
+    index.ts
 tests/
+CHANGELOG.md
+USAGE.md
+wrangler.jsonc
 ```
 
-## 支持协议与重命名策略
+## 开发命令
 
-- `vmess`：解码 JSON 后修改 `ps`
-- `ssr`：解码 `remarks` 后重新写回
-- 其余协议：优先改 `#fragment`，若无 fragment 则尝试 `remarks`、`remark`、`name`、`ps`
-- 仅在节点名未带 emoji 前缀时补充国旗
+```bash
+npm run typecheck
+npm test
+npm run build
+npm run dev
+npm run deploy
+```
 
-## GitHub Actions 发布
+其中：
 
-仓库内置工作流会执行以下步骤：
+- `npm run build`：执行 Worker 的 dry-run 构建
+- `npm run deploy`：发布到 Cloudflare
 
-- `push` / `pull_request`：安装依赖、类型检查、单测、构建、上传 artifact
-- `push` 到 `main`：同步 `dist` 产物到 `release` 分支，供 jsDelivr 加速分发
-- `push tag v*`：在通过校验后自动发布 GitHub Release
+## GitHub Actions
 
-发布资产包括：
+当前工作流会：
 
-- `LocalFlag64.plugin`
-- `localflag64.min.js`
+- 在 `push` / `pull_request` 时执行安装依赖、类型检查、单测、Worker dry-run 构建
+- 在打 tag 时创建 GitHub Release
 
-## 注意事项
+注意：当前仓库默认不自动部署到你的 Cloudflare 账号，因为这需要你自行配置 `CLOUDFLARE_API_TOKEN` 和 `CLOUDFLARE_ACCOUNT_ID`
 
-- 本项目不依赖未公开确认的 Loon `[subscription]` 钩子
-- 插件只代理用户提供的原始订阅地址，不提供任何第三方中转服务
-- 如果上游订阅不是 Base64 节点列表，插件会直接透传原始内容
-- 某些机场若使用私有协议或非标准备注格式，节点名可能保持不变
+## 安全说明
+
+- 你的真实订阅地址不会被写进仓库代码
+- 真实订阅仅出现在你自己填入的 Worker 请求 URL 中
+- 如果你不希望在 Loon 配置里直接出现真实订阅地址，可以后续再加一层自定义 token 或 Worker Secret 映射

@@ -40,30 +40,19 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: localflag64-dist
-          path: dist/*
-
-      - name: Publish dist to release branch
-        if: github.event_name == 'push'
-        shell: bash
-        run: |
-          mkdir -p .publish
-          cp dist/LocalFlag64.plugin .publish/LocalFlag64.plugin
-          cp dist/localflag64.min.js .publish/localflag64.min.js
-          cd .publish
-          git init
-          git checkout -b release
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add .
-          git commit -m "chore: publish ${GITHUB_SHA}"
-          git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
-          git push --force origin release
+          name: localflag64-worker-dist
+          path: |
+            dist/worker/**
+            wrangler.jsonc
+            README.md
+            USAGE.md
 
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/LocalFlag64.plugin
-            dist/localflag64.min.js
+            dist/worker/**
+            wrangler.jsonc
+            README.md
+            USAGE.md

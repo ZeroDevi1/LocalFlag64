@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { encodeBase64Utf8, tryDecodeBase64Utf8 } from "../src/core/base64";
 import { processSubscriptionBody } from "../src/core/subscription";
-import { handleSubscriptionProxyRequest } from "../src/loon/handler";
+import { handleSubscriptionProxyRequest } from "../src/service/proxy";
 
 describe("subscription processing", () => {
   it("处理混合协议的 Base64 订阅", () => {
@@ -36,7 +36,7 @@ describe("subscription processing", () => {
   it("处理本地入口代理请求", async () => {
     const upstreamBody = encodeBase64Utf8("trojan://password@example.com:443#US%20Seattle");
     const response = await handleSubscriptionProxyRequest(
-      "https://localflag64.loon/sub?url=https%3A%2F%2Fexample.com%2Fsub",
+      "https://localflag64.zero.workers.dev/sub?url=https%3A%2F%2Fexample.com%2Fsub",
       async () => ({
         body: upstreamBody,
         headers: {
@@ -55,7 +55,7 @@ describe("subscription processing", () => {
 
   it("缺少 url 参数时返回 400", async () => {
     const response = await handleSubscriptionProxyRequest(
-      "https://localflag64.loon/sub",
+      "https://localflag64.zero.workers.dev/sub",
       async () => ({
         body: "",
         headers: {},
@@ -65,5 +65,19 @@ describe("subscription processing", () => {
 
     expect(response.status).toBe(400);
     expect(response.body).toContain("缺少 url 参数");
+  });
+
+  it("路径不存在时返回 404", async () => {
+    const response = await handleSubscriptionProxyRequest(
+      "https://localflag64.zero.workers.dev/invalid?url=https%3A%2F%2Fexample.com%2Fsub",
+      async () => ({
+        body: "",
+        headers: {},
+        status: 200
+      })
+    );
+
+    expect(response.status).toBe(404);
+    expect(response.body).toContain("路径不存在");
   });
 });

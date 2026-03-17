@@ -7,14 +7,13 @@
     "noEmit": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "allowJs": true,
+    "allowJs": false,
     "types": [
       "node",
       "vitest/globals"
     ]
   },
   "include": [
-    "scripts/**/*.d.ts",
     "src/**/*.ts",
     "tests/**/*.ts"
   ]

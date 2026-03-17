@@ -1,11 +1,21 @@
 import { processSubscriptionBody } from "../core/subscription";
-import type { RuntimeFetcher, RuntimeResponse } from "./runtime";
+
+export interface RuntimeResponse {
+  body: string;
+  headers: Record<string, string>;
+  status: number;
+}
 
 export interface ProxyResponse {
   body: string;
   headers: Record<string, string>;
   status: number;
 }
+
+export type RuntimeFetcher = (
+  url: string,
+  init?: { headers?: Record<string, string>; method?: string }
+) => Promise<RuntimeResponse>;
 
 function textResponse(status: number, body: string): ProxyResponse {
   return {
@@ -72,11 +82,18 @@ export async function handleSubscriptionProxyRequest(
     return textResponse(400, "[LocalFlag64] 无法解析请求 URL");
   }
 
+  if (parsedRequest.pathname !== "/" && parsedRequest.pathname !== "/sub") {
+    return textResponse(
+      404,
+      "[LocalFlag64] 路径不存在。请使用 /sub?url=<原订阅链接>"
+    );
+  }
+
   const upstreamRaw = parsedRequest.searchParams.get("url");
   if (!upstreamRaw) {
     return textResponse(
       400,
-      "[LocalFlag64] 缺少 url 参数。请使用 https://localflag64.loon/sub?url=<原订阅链接>"
+      "[LocalFlag64] 缺少 url 参数。请使用 /sub?url=<原订阅链接>"
     );
   }
 
