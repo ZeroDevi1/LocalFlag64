@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "types": [
+      "node",
+      "vitest/globals"
+    ]
+  },
+  "include": [
+    "scripts/**/*.d.ts",
+    "src/**/*.ts",
+    "tests/**/*.ts"
+  ]
+}

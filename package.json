@@ -1,0 +1,25 @@
+{
+  "name": "localflag64",
+  "version": "1.0.0",
+  "description": "Loon 本地 Base64 订阅加旗插件",
+  "type": "module",
+  "private": true,
+  "author": "LocalFlag64 contributors",
+  "homepage": "https://github.com/ZeroDevi1/LocalFlag64",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ZeroDevi1/LocalFlag64.git"
+  },
+  "scripts": {
+    "build": "node ./scripts/build.mjs",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm run test && npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^24.6.1",
+    "esbuild": "^0.25.9",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}
