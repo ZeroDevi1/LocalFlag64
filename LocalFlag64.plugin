@@ -1,0 +1,12 @@
+#!name= LocalFlag64
+#!desc= 本地为 Base64 节点订阅添加 emoji 国旗
+#!author= LocalFlag64 contributors
+#!homepage= https://github.com/ZeroDevi1/LocalFlag64
+#!version= 1.0.0
+#!date= 2026-03-17
+
+[Script]
+http-request ^https?:\/\/localflag64\.loon\/sub(?:\?.*)?$ script-path=https://cdn.jsdelivr.net/gh/ZeroDevi1/LocalFlag64@release/localflag64.min.js, timeout=60, tag=LocalFlag64
+
+[MITM]
+hostname = localflag64.loon
